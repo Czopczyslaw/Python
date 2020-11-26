@@ -1,0 +1,89 @@
+#zad1
+import random
+suma=0
+maks=10000000
+for i in range(1,maks):
+    x = random.uniform(0,1)
+    y = random.uniform(0,1)
+    punkt = (x*x)+(y*y) 
+    if(punkt<=1):
+        suma+=1
+print("tyle losow")
+print(maks)
+print("tyle trafionych")
+print(suma)
+print("tyle wynosi ich iloraz")
+print(suma/maks)
+print("przyblizenie liczby PI")
+print(4*(suma/maks))  
+
+##################################################
+#zad2
+from collections import deque
+zadanka=deque(["ABC","DE","F"])
+#zadanka.append("G")
+
+def Karuzela(zadania):
+    najdluzszy=0
+    kolejeczka=""
+    for i,e in enumerate(zadania):
+        if(len(e)>najdluzszy):
+            najdluzszy=len(e)
+    for j in range(najdluzszy):
+        for i,e in enumerate(zadania):
+            if(len(e)>0):
+                kolejeczka+=e[0:1]
+                #print(kolejeczka)
+                zadania[i]=zadania[i][1:len(zadania[i])]
+    print(kolejeczka)
+Karuzela(zadanka)
+
+
+###################################################
+#zad3 Stwórz kolekcję książek zawierającą takie pola jak tytuł, gatunek, autor, isbn. 
+#Napisz trzy funkcje, (i) zapisującą kolekcję, (ii) odczytującą kolekcję, (iii) obliczająca statystykę wg. gatunku i autora.
+from collections import Counter
+import shelve
+
+        
+ksiazki = [{ 'tytul': 'metro2033', 'gatunek': 'postapo', 'autor':'Dimitri Glukhovsky', 'isbn':'jakiescyferki' },
+           { 'tytul': 'metro2034', 'gatunek': 'postapo', 'autor':'Dimitri Glukhovsky', 'isbn':'jakiescyferki' },
+           { 'tytul': 'metro2035', 'gatunek': 'postapo', 'autor':'Dimitri Glukhovsky', 'isbn':'jakiescyferki' }]
+def zapisz(ksiazki):
+    with shelve.open('ksiazki.db') as shelf:
+        for id, ksiazka in enumerate(ksiazki):
+            shelf[str(id)] = ksiazka
+def wczytaj(ksiazki):
+    with shelve.open('ksiazki.db') as shelf:
+        for id in enumerate(shelf):
+            ksiazki.append(shelf[str(id)])
+def statystyka(ksiazki):
+    gatunek = map(lambda x:x['gatunek'],ksiazki)
+    counter = Counter(list(gatunek))
+    print("najczesciej wystepujacy gatunek")
+    print(counter.most_common())
+    
+    autor= map(lambda x:x['autor'],ksiazki)
+    counter = Counter(list(autor))
+    print("najczesciej wystepujacy autor")
+    print(counter.most_common())
+    
+
+statystyka(ksiazki)
+######################################################
+#zad 4
+#Za pomocą namedtuple i innych poznanych kolekcji zaimplementuj algorytm tworzący drzewo binarne.
+from collections import namedtuple
+
+Galazka = namedtuple('Galazka',['value','left','right'])
+def ZrobGalaz(n):   
+    if n == 0:
+        galaz = Galazka(value = n, left = None, right = None)
+    else:          
+        galaz = Galazka(value = n, left = ZrobGalaz(n - 1), right = ZrobGalaz(n - 1))
+    return galaz
+    
+
+def Drzewo(n):    
+    korzen = Galazka(value = n, left = ZrobGalaz(n) , right = ZrobGalaz(n))
+   
