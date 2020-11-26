@@ -1,0 +1,188 @@
+#Zad 1
+#Porównaj zapisywanie i odczytywanie kolekcji (100, 10000, 100 000 elementów) za pomocą trzech technik: modułu pickle, parquet i xlsx.
+import time
+import pandas as pd
+from pickle import dump, load
+from tempfile import mktemp
+from os import unlink
+from fastparquet import ParquetFile
+from openpyxl import Workbook, load_workbook
+from typing import Dict
+from itertools import product
+
+def StworzKolekcje(ile):
+    kolekcja={}
+    for i in range(ile):
+        kolekcja['A'+str(i+1)]=list(range(i,i+1))
+    return kolekcja
+
+def ZmierzCzas(func):
+    start=time.time()
+    func
+    print(time.time()-start)
+
+def ZapiszWczytajPickle(kolekcja):
+    temp_file = mktemp()
+    try:
+        with open(temp_file, 'wb') as f:
+            dump(kolekcja, f)
+            f.flush()
+        with open(temp_file, 'rb') as f:
+            temp_col = load(f)
+    finally:
+        unlink(temp_file)
+def ZapiszWczytajParquet(kolekcja):
+    df = pd.DataFrame.from_dict(kolekcja)
+    temp_file = mktemp()
+    try:
+        df.to_parquet(temp_file, compression='GZIP')
+        pf = ParquetFile(temp_file)
+        df = pf.to_pandas()
+    finally:
+        unlink(temp_file)
+def ZapiszWczytajXLSX(kolekcja):
+    def describe(file_name, sheet_name):
+        wb = load_workbook(file_name)
+    def create(data: Dict[str, int], file_name, sheet_name):
+        wb = Workbook()
+        sheet = wb.create_sheet(sheet_name)
+        for cell_key, cell_value in data.items():
+            sheet[cell_key] = cell_value[0]
+        wb.save(file_name)
+
+    file_name = mktemp(suffix='.xlsx')
+
+    try:
+        create(kolekcja, file_name, 'test')
+        describe(file_name, 'test')
+
+    finally:
+        unlink(file_name)
+    
+print("czas dla pickle 100:")        
+ZmierzCzas(ZapiszWczytajPickle(StworzKolekcje(100)))
+print("czas dla parquet 100:")        
+ZmierzCzas(ZapiszWczytajParquet(StworzKolekcje(100)))
+print("czas dla XLSX 100:")        
+ZmierzCzas(ZapiszWczytajXLSX(StworzKolekcje(100)))
+
+print("czas dla pickle 1000:")        
+ZmierzCzas(ZapiszWczytajPickle(StworzKolekcje(1000)))
+print("czas dla parquet 1000:")        
+ZmierzCzas(ZapiszWczytajParquet(StworzKolekcje(1000)))
+print("czas dla XLSX 1000:")        
+ZmierzCzas(ZapiszWczytajXLSX(StworzKolekcje(1000)))
+
+print("czas dla pickle 10000:")        
+ZmierzCzas(ZapiszWczytajPickle(StworzKolekcje(10000)))
+print("czas dla parquet 10000:")        
+ZmierzCzas(ZapiszWczytajParquet(StworzKolekcje(10000)))
+print("czas dla XLSX 10000:")        
+ZmierzCzas(ZapiszWczytajXLSX(StworzKolekcje(10000)))
+####################################################################################
+#zad 2
+#Zbadaj przyspieszenie związane z zastosowaniem pamięci podręcznej na wybranych przykładzie funkcji rekurencyjnej 
+#(np. ciągu Fibonacciego)
+from functools import lru_cache, cached_property
+
+@lru_cache(maxsize=100)
+def fib(ile):
+    if(ile==0): return 0
+    elif(ile==1): return 1
+    else: return fib(ile-1)+fib(ile-2)
+    
+
+def ZmierzCzas(func):
+    start=time.time()
+    print(func)
+    print(time.time()-start)
+    
+ZmierzCzas(fib(100))
+
+#kod ktory przed lru_cache wykonywal sie strasznie dlugo, teraz wykonuje sie w 0.0004 sekundy
+##############################################################################################################
+#zad3
+#Napisz program tworzący bazę danych z interfejsem konsolowym.
+#Wymagane są następujące operacje, dodanie wiersza, usunięcie wiersza, zmiana pola wiersza, wyświetlenie opcji.
+#Menu można zorganizować jako odczytywanie parametrów zwróconych przez funkcję input lub z pomocą komend (łatwiejszy sposób)
+import shelve
+from collections import namedtuple
+from IPython.display import clear_output
+Uzyszkodnik=namedtuple("Uzyszkodnik",["imie","nazwisko"])
+data=[]
+def Main():
+
+    x=""
+    while(x!="quit"):
+        print("co zrobic?")
+        x=input()
+########################################################################
+        if(x=="dodaj"): 
+            clear_output(wait=True)
+            print("co dodac?")
+            print("imie:")
+            y=input()
+            print("nazwisko")
+            z=input()
+            wiersz=Uzyszkodnik(y,z)
+            if(not wiersz in data):
+                data.append(wiersz)
+                print("dodano")
+            else:
+                print("juz tu taki jest")
+########################################################################
+        elif(x=="usun"):
+            clear_output(wait=True)
+            print("jakie imie usunac?")
+            y=input()
+            for ind, uzyszkodnik in enumerate(data):
+                if uzyszkodnik.imie == y:
+                    data.remove(uzyszkodnik)
+                    print("usunieto")
+                else: print("brak tu takiego wiersza")
+########################################################################
+        elif(x=="zmien"):
+            
+            print("co zmienic - nazwisko czy imie?")
+            y=input()
+            clear_output(wait=True)
+            if(y=="imie"):
+                z=input()
+                for ind, uzyszkodnik in enumerate(data):
+                    if uzyszkodnik.imie == z:
+                        print("na co zmienic?")
+                        c=input()
+                        d=uzyszkodnik.nazwisko
+                        data[ind]=Uzyszkodnik(c,d)
+                        print("zmieniono")
+                        break
+                    else: print("brak tu takiego wiersza")
+            elif(y=="nazwisko"):
+                z=input()
+                for ind, uzyszkodnik in enumerate(data):
+                    if uzyszkodnik.nazwisko == z:
+                        print("na co zmienic?")
+                        c=input()
+                        d=uzyszkodnik.imie
+                        data[ind]=Uzyszkodnik(d,c)
+                        print("zmieniono") 
+                        break
+                    else: print("brak tu takiego wiersza")
+            else:
+                print("zle wybrano :/")
+########################################################################
+        elif(x=="pokaz"):
+            clear_output(wait=True)
+           # for id in Baza:
+            print(data)
+########################################################################
+        elif(x=="wyswietl"):
+            clear_output(wait=True)
+            print("dodaj - Dodaj wiersz")
+            print("usun  - Usun wiersz")
+            print("zmien - Zmien wiersz")
+            print("wyswietl - wyswietl komendy")
+            print("pokaz - pokaz baze")
+    print("Goodbye :)")
+
+Main()
