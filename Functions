@@ -1,0 +1,94 @@
+#zad 1
+import inspect
+import shelve
+import hashlib, binascii
+from os import urandom
+
+Plogin="Maciek"
+with shelve.open('haslo.db') as shelf:
+       PHaslo=shelf['haslo']
+#PHaslo=""
+#with shelve.open('haslo.db') as shelf:
+#        PHaslo=shelf['haslo']
+#        salt=shelf['salt']
+
+################################################
+def hash_password(password):
+    """Hash a password for storing."""
+    with shelve.open('haslo.db') as shelf:
+        salt=shelf['salt']
+    pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'),
+                                salt, 100000)
+    pwdhash = binascii.hexlify(pwdhash)
+    return (salt + pwdhash).decode('ascii')
+
+#hash_password('test')
+#################################################
+
+def wygenerujSalt():
+    salt = hashlib.sha256(urandom(60)).hexdigest().encode('ascii')
+    print(salt)
+    return salt
+
+#with shelve.open('haslo.db') as shelf:
+#   shelf['haslo']=hash_password("soplica")
+################################################
+def Dekor(funkcja):
+    def wrapper(*args):
+        args=(args[0],hash_password(args[1]))
+        print(args)
+        funkcja(*args)
+    return wrapper
+################################################
+@Dekor
+def Logowanie(login, haslo):
+    if(login==Plogin and haslo==PHaslo): print("zalogowano")
+    else: print("nie zalogowano")
+
+print(PHaslo)
+print(Plogin)
+
+Logowanie("Maciek","soplica")
+
+#######################################################################################################
+
+
+#zad2
+#Napisz dekorator, który ogranicza argument funkcji do zadanego przedziału.
+
+def dekorator(funkc):
+    def wrap(value):
+        if value>20:
+            value=20
+        elif value<0:
+            value=0
+        funkc(value)
+    return wrap
+
+@dekorator
+def funkcja(argument):
+    print(argument)
+
+funkcja(21)
+
+
+#################################################################################
+
+#zad 3
+#Napisz generator, który dla zadanego wielomianu i przedziału wartości, zwróci jego miejsca zerowe. 
+#Dla pierwszego wywołania wynikiem ma być pierwsze miejsce zerowe, dla drugiego, drugie itd. 
+#Można zastosować naiwny algorytm sprawdzający kolejne wartości wielomianu. 
+#Można również zastosować kodowanie wielomianu bezpośrednio w kodzie języka Python
+#x**n*x**(n-1)
+
+def generator(pocz,kon,n):
+    x=pocz
+    while(x<kon):
+    #for x in range(pocz,kon):
+        if(round(x**(-n)*x**(2*n),5)==0):
+        #if(==0):
+            yield round(x,5)
+        x+=0.001
+
+
+print(next(generator(-10,30,2)))
